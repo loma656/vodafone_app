@@ -39,7 +39,6 @@ def main(page: ft.Page):
     page.scroll = ft.ScrollMode.AUTO
     page.padding = 20
 
-    # جلب Device ID
     device_id_file = "/data/data/ru.iiec.pydroid3/cache/device_uid.txt" if os.path.exists("/data/data/ru.iiec.pydroid3") else "device_uid.txt"
     
     if os.path.exists(device_id_file):
@@ -79,78 +78,6 @@ def main(page: ft.Page):
 
     content_area = ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
-    # دالة توليد الأكواد الخاصة بالأدمن
-    def generate_license_code(target_did, duration_type, duration_value):
-        current_time = int(time.time())
-        if duration_type == 'days':
-            expire_time = current_time + (duration_value * 24 * 60 * 60)
-        elif duration_type == 'months':
-            expire_time = current_time + (duration_value * 30 * 24 * 60 * 60)
-        elif duration_type == 'years':
-            expire_time = current_time + (duration_value * 365 * 24 * 60 * 60)
-        else:
-            expire_time = current_time + (24 * 60 * 60)
-            
-        payload = {"did": target_did, "exp": expire_time}
-        encoded = base64.b64encode(json.dumps(payload).encode()).decode()
-        return f"VF-{encoded}"
-
-    # لوحة تحكم الأدمن
-    def load_admin_panel():
-        content_area.controls.clear()
-        
-        target_did_field = ft.TextField(label="Device ID الخاص بالعميل", width=350)
-        duration_type_dropdown = ft.Dropdown(
-            label="نوع المدة",
-            options=[
-                ft.dropdown.Option(text="أيام (Days)", key="days"),
-                ft.dropdown.Option(text="أشهر (Months)", key="months"),
-                ft.dropdown.Option(text="سنة (Years)", key="years"),
-            ],
-            value="days",
-            width=350,
-        )
-        duration_value_field = ft.TextField(label="العدد (مثلاً: 30 أو 1)", keyboard_type=ft.KeyboardType.NUMBER, width=350)
-        result_code_field = ft.TextField(label="كود التفعيل الناتج", read_only=True, width=350, multiline=True)
-        admin_status = ft.Text(value="", size=14)
-
-        def make_code(e):
-            try:
-                did = target_did_field.value.strip()
-                dtype = duration_type_dropdown.value
-                val = int(duration_value_field.value.strip())
-                if not did:
-                    admin_status.value = "❌ يجب إدخال Device ID للعميل"
-                    admin_status.color = ft.Colors.RED
-                    page.update()
-                    return
-                
-                code = generate_license_code(did, dtype, val)
-                result_code_field.value = code
-                admin_status.value = "✅ تم توليد الكود بنجاح!"
-                admin_status.color = ft.Colors.GREEN
-            except:
-                admin_status.value = "❌ تأكد من صحة القيم المدخلة"
-                admin_status.color = ft.Colors.RED
-            page.update()
-
-        gen_btn = ft.ElevatedButton("توليد الكود", on_click=make_code, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=350)
-        back_btn = ft.TextButton("الرجوع لتطبيق الشحن", on_click=lambda e: check_and_load())
-
-        content_area.controls.extend([
-            ft.Text("👑 لوحة تحكم الأدمن", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE),
-            ft.Divider(),
-            target_did_field,
-            duration_type_dropdown,
-            duration_value_field,
-            gen_btn,
-            result_code_field,
-            admin_status,
-            back_btn
-        ])
-        page.update()
-
-    # الشاشة الرئيسية للمستخدم
     def load_main_app(expire_time):
         content_area.controls.clear()
         
@@ -372,7 +299,6 @@ def main(page: ft.Page):
         ])
         page.update()
 
-    # شاشة التفعيل
     def load_activation_screen():
         content_area.controls.clear()
         
@@ -396,10 +322,6 @@ def main(page: ft.Page):
 
         def verify_code(e):
             entered_code = activation_input.value.strip()
-            
-            if entered_code == "ADMIN-MASTER-KEY-2026":
-                load_admin_panel()
-                return
 
             try:
                 if not entered_code.startswith("VF-"):
@@ -432,7 +354,6 @@ def main(page: ft.Page):
             bgcolor=ft.Colors.GREEN,
         )
 
-        # أزرار التواصل (تم تعديلها لتستخدم content=ft.Text لتجنب خطأ Flet)
         whatsapp_btn = ft.ElevatedButton(
             content=ft.Text("تواصل واتساب", color=ft.Colors.WHITE),
             icon=ft.Icons.PHONE,
@@ -468,13 +389,11 @@ def main(page: ft.Page):
         ])
         page.add(content_area)
 
-    def check_and_load():
-        did, exp = get_license_details()
-        if did and exp > time.time():
-            load_main_app(exp)
-        else:
-            load_activation_screen()
-
-    check_and_load()
+    did, exp = get_license_details()
+    if did and exp > time.time():
+        load_main_app(exp)
+    else:
+        load_activation_screen()
 
 ft.app(target=main)
+
