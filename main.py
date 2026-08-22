@@ -95,7 +95,7 @@ def main(page: ft.Page):
         encoded = base64.b64encode(json.dumps(payload).encode()).decode()
         return f"VF-{encoded}"
 
-    # شاشة لوحة تحكم الأدمن (لتوليد الأكواد من التطبيق مباشرة)
+    # لوحة تحكم الأدمن
     def load_admin_panel():
         content_area.controls.clear()
         
@@ -120,7 +120,7 @@ def main(page: ft.Page):
                 dtype = duration_type_dropdown.value
                 val = int(duration_value_field.value.strip())
                 if not did:
-                    admin_status.value = "❌ يجيب إدخال Device ID للعميل"
+                    admin_status.value = "❌ يجب إدخال Device ID للعميل"
                     admin_status.color = ft.Colors.RED
                     page.update()
                     return
@@ -154,7 +154,6 @@ def main(page: ft.Page):
     def load_main_app(expire_time):
         content_area.controls.clear()
         
-        # حساب المدة المتبقية لعرضها للمستخدم
         remaining_seconds = expire_time - time.time()
         rem_days = int(remaining_seconds // (24 * 3600))
         rem_hours = int((remaining_seconds % (24 * 3600)) // 3600)
@@ -373,11 +372,10 @@ def main(page: ft.Page):
         ])
         page.update()
 
-    # شاشة التفعيل (إذا لم يكن التطبيق مفعلاً)
+    # شاشة التفعيل
     def load_activation_screen():
         content_area.controls.clear()
         
-        # حقل نصي لـ Device ID مع زر نسخ يعمل 100% بدون مشاكل
         id_field = ft.TextField(
             label="Device ID الخاص بك",
             value=my_device_id,
@@ -399,8 +397,7 @@ def main(page: ft.Page):
         def verify_code(e):
             entered_code = activation_input.value.strip()
             
-            # إذا كتب المستخدم كلمة سر الأدمن الخاصة بك هنا، يفتح له لوحة تحكم الأدمن فوراً!
-            if entered_code == "ADMIN-MASTER-KEY-2026": # يمكنك تغيير كلمة سر الأدمن من هنا
+            if entered_code == "ADMIN-MASTER-KEY-2026":
                 load_admin_panel()
                 return
 
@@ -435,16 +432,41 @@ def main(page: ft.Page):
             bgcolor=ft.Colors.GREEN,
         )
 
+        # أزرار التواصل (واتساب وتليجرام)
+        whatsapp_btn = ft.ElevatedButton(
+            text="تواصل واتساب",
+            icon=ft.Icons.PHONE,
+            bgcolor=ft.Colors.GREEN_700,
+            color=ft.Colors.WHITE,
+            url="https://wa.me/201095486123",
+            width=165
+        )
+
+        telegram_btn = ft.ElevatedButton(
+            text="تواصل تليجرام",
+            icon=ft.Icons.SEND,
+            bgcolor=ft.Colors.BLUE_700,
+            color=ft.Colors.WHITE,
+            url="https://t.me/R_XTS",
+            width=165
+        )
+
+        contact_row = ft.Row([whatsapp_btn, telegram_btn], alignment=ft.MainAxisAlignment.CENTER)
+
         content_area.controls.extend([
             ft.Text("🔒 التطبيق مقفل", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.RED),
-            ft.Container(height=10),
-            ft.Text("اضغط على زر النسخ بجانب معرف جهازك وأرسله للمسؤول:", size=13, text_align=ft.TextAlign.CENTER),
+            ft.Container(height=5),
+            ft.Text("انسخ معرف جهازك وتواصل معنا للحصول على كود التفعيل:", size=12, text_align=ft.TextAlign.CENTER),
             row_id,
-            ft.Container(height=10),
+            ft.Container(height=5),
             activation_input,
-            ft.Container(height=10),
+            ft.Container(height=5),
             activate_btn,
-            activation_status
+            activation_status,
+            ft.Container(height=10),
+            ft.Text("للتواصل الشحن والتفعيل:", size=12, weight=ft.FontWeight.BOLD),
+            ft.Container(height=5),
+            contact_row
         ])
         page.add(content_area)
 
@@ -458,3 +480,4 @@ def main(page: ft.Page):
     check_and_load()
 
 ft.app(target=main)
+
