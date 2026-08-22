@@ -33,172 +33,219 @@ def main(page: ft.Page):
     page.title = "شحن فكة ومارد - فودافون"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.scroll = "auto"
-    page.theme_mode = ft.ThemeMode.DARK
+    page.scroll = ft.ScrollMode.AUTO
+    page.padding = 20
 
-    # حقول الإدخال
-    receiver_input = ft.TextField(label="رقم المستلم (11 رقم)", prefix_icon=ft.icons.PHONE, max_length=11)
-    pin_input = ft.TextField(label="الرقم السري للمحفظة", password=True, can_reveal_password=True, prefix_icon=ft.icons.LOCK)
-    
-    # قائمة اختيار الباقات
+    # عناصر الواجهة
     product_dropdown = ft.Dropdown(
         label="اختر الباقة",
         options=[ft.dropdown.Option(text=name, key=pid) for name, pid in ALL_PRODUCTS],
-        width=350
+        width=350,
     )
     
-    status_text = ft.Text(value="", size=14, selectable=True)
+    receiver_field = ft.TextField(
+        label="رقم المستلم (11 رقم)",
+        prefix_icon=ft.icons.PHONE,
+        keyboard_type=ft.KeyboardType.PHONE,
+        max_length=11,
+        width=350,
+    )
+    
+    pin_field = ft.TextField(
+        label="الرقم السري للمحفظة",
+        prefix_icon=ft.icons.LOCK,
+        password=True,
+        can_reveal_password=True,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        width=350,
+    )
+    
+    status_text = ft.Text(value="", text_align=ft.TextAlign.CENTER, size=14)
+    progress_ring = ft.ProgressRing(visible=False)
 
     def execute_recharge(e):
-        receiver = receiver_input.value.strip()
-        pin = pin_input.value.strip()
-        selected_product_id = product_dropdown.value
-
-        if not receiver or not pin or not selected_product_id:
-            status_text.value = "❌ جميع الحقول مطلوبة واختيار الباقة أساسي!"
+        if not product_dropdown.value:
+            status_text.value = "❌ من فضلك اختر الباقة أولاً"
+            status_text.color = ft.colors.RED
             page.update()
             return
-
+            
+        receiver = receiver_field.value.strip()
         if not (receiver.startswith("01") and len(receiver) == 11 and receiver.isdigit()):
-            status_text.value = "❌ رقم غير صحيح! يجب أن يبدأ بـ 01 ويكون 11 رقماً."
+            status_text.value = "❌ رقم غير صحيح! يجب أن يبدأ بـ 01 ويتكون من 11 رقماً"
+            status_text.color = ft.colors.RED
+            page.update()
+            return
+            
+        pin = pin_field.value.strip()
+        if not pin:
+            status_text.value = "❌ الرقم السري مطلوب"
+            status_text.color = ft.colors.RED
             page.update()
             return
 
-        status_text.value = "🔄 جاري تسجيل الدخول والحصول على التوكن..."
+        product_id = product_dropdown.value
+        product_name = next((name for name, pid in ALL_PRODUCTS if pid == product_id), "")
+
+        # تعطيل الزر وإظهار التحميل
+        progress_ring.visible = True
+        status_text.value = "🔄 جاري تنفيذ العملية..."
+        status_text.color = ft.colors.BLUE
         page.update()
 
         try:
-            # 1. الحصول على seamless token
+            # 1. Seamless Token
             url = "http://mobile.vodafone.com.eg/checkSeamless/realms/vf-realm/protocol/openid-connect/auth"
             params = {'client_id': "cash-app"}
             headers = {
                 'User-Agent': "okhttp/4.12.0",
+                'Connection': "Keep-Alive",
+                'Accept-Encoding': "gzip",
+                'x-agent-operatingsystem': "16",
                 'clientId': "AnaVodafoneAndroid",
                 'Accept-Language': "ar",
                 'x-agent-device': "Samsung SM-A165F",
                 'x-agent-version': "2025.11.1",
                 'x-agent-build': "1063",
-                'device-id': "b26ba335813fad21"
+                'digitalId': "",
+                'device-id': "b26ba335813fad21",
+                'If-Modified-Since': "Thu, 02 Apr 2026 09:09:07 GMT"
             }
-
-            res = requests.get(url, params=params, headers=headers, timeout=30)
-            if res.status_code != 200:
-                status_text.value = f"❌ فشل الاتصال بخدمة التحقق: {res.status_code}"
-                page.update()
-                return
-
-            data = res.json()
+            
+            response = requests.get(url, params=params, headers=headers, timeout=30)
+            if response.status_code != 200:
+                raise Exception(f"فشل الاتصال (1): {response.status_code}")
+                
+            data = response.json()
             seamless_token = data.get('seamlessToken')
             msisdn_sender = data.get('msisdn')
-
+            
             if not seamless_token:
-                status_text.value = "❌ فشل الحصول على seamless token"
-                page.update()
-                return
-
+                raise Exception("فشل الحصول على seamless token")
+                
             if msisdn_sender and msisdn_sender.startswith('1'):
                 msisdn_sender = '0' + msisdn_sender
 
-            # 2. الحصول على access token
-            status_text.value = "🔄 جاري توثيق الحساب..."
-            page.update()
-
+            # 2. Access Token
             token_url = "https://mobile.vodafone.com.eg/auth/realms/vf-realm/protocol/openid-connect/token"
             payload = {
                 'grant_type': "password",
                 'client_secret': "b86e30a8-ae29-467a-a71f-65c73f2ff5e3",
                 'client_id': "cash-app"
             }
-            token_headers = headers.copy()
-            token_headers.update({
+            token_headers = {
+                'User-Agent': "okhttp/4.12.0",
                 'Accept': "application/json, text/plain, */*",
+                'Accept-Encoding': "gzip",
                 'silentLogin': "true",
                 'CRP': "false",
                 'seamlessToken': seamless_token,
-                'firstTimeLogin': "true"
-            })
-
-            res_token = requests.post(token_url, data=payload, headers=token_headers, timeout=30)
-            if res_token.status_code != 200:
-                status_text.value = "❌ فشل الحصول على توكن الوصول."
-                page.update()
-                return
-
-            access_token = res_token_data = res_token.json().get('access_token')
+                'firstTimeLogin': "true",
+                'x-agent-operatingsystem': "16",
+                'clientId': "AnaVodafoneAndroid",
+                'Accept-Language': "ar",
+                'x-agent-device': "Samsung SM-A165F",
+                'x-agent-version': "2025.11.1",
+                'x-agent-build': "1063",
+                'digitalId': "",
+                'device-id': "b26ba335813fad21"
+            }
+            
+            response = requests.post(token_url, data=payload, headers=token_headers, timeout=30)
+            if response.status_code != 200:
+                raise Exception(f"فشل الحصول على التوكن: {response.status_code}")
+                
+            token_data = response.json()
+            access_token = token_data.get('access_token')
             if not access_token:
-                status_text.value = "❌ توكن الوصول غير متوفر."
-                page.update()
-                return
+                raise Exception("فشل الحصول على access token")
 
-            # 3. تنفيذ طلب الشحن
-            status_text.value = "🔄 جاري تنفيذ عملية الشحن..."
-            page.update()
-
+            # 3. Product Order
             order_url = "https://mobile.vodafone.com.eg/services/dxl/pom/productOrder"
             order_payload = {
                 "channel": {"name": "MobileApp"},
-                "orderItem": [{
-                    "action": "insert",
-                    "id": selected_product_id,
-                    "product": {
-                        "characteristic": [
-                            {"name": "PaymentMethod", "value": "VFCash"},
-                            {"name": "USE_EMONEY", "value": "False"},
-                            {"name": "MerchantCode", "value": "81841829"}
-                        ],
-                        "id": selected_product_id,
-                        "relatedParty": [
-                            {"id": msisdn_sender, "name": "MSISDN", "role": "Subscriber"},
-                            {"id": receiver, "name": "Receiver", "role": "Receiver"}
-                        ]
-                    },
-                    "@type": selected_product_id,
-                    "eCode": 0
-                }],
+                "orderItem": [
+                    {
+                        "action": "insert",
+                        "id": product_id,
+                        "product": {
+                            "characteristic": [
+                                {"name": "PaymentMethod", "value": "VFCash"},
+                                {"name": "USE_EMONEY", "value": "False"},
+                                {"name": "MerchantCode", "value": "81841829"}
+                            ],
+                            "id": product_id,
+                            "relatedParty": [
+                                {"id": msisdn_sender, "name": "MSISDN", "role": "Subscriber"},
+                                {"id": receiver, "name": "Receiver", "role": "Receiver"}
+                            ]
+                        },
+                        "@type": product_id,
+                        "eCode": 0
+                    }
+                ],
                 "relatedParty": [{"id": pin, "name": "pin", "role": "Requestor"}],
                 "@type": "CashFakkaAndMared"
             }
-
-            order_headers = headers.copy()
-            order_headers.update({
+            
+            order_headers = {
+                'User-Agent': "okhttp/4.12.0",
                 'Accept': "application/json",
+                'Accept-Encoding': "gzip",
                 'api-host': "ProductOrderingManagement",
-                'useCase': "CashFakkaAndMared',
+                'useCase': "CashFakkaAndMared",
                 'X-Request-ID': "bb81cbe5-0c77-4673-945e-d2c0de90007a",
+                'device-id': "b26ba335813fad21",
                 'api-version': "v2",
                 'msisdn': msisdn_sender,
                 'Authorization': f"Bearer {access_token}",
+                'Accept-Language': "ar",
+                'x-agent-operatingsystem': "16",
+                'clientId': "AnaVodafoneAndroid",
+                'x-agent-device': "Samsung SM-A165F",
+                'x-agent-version': "2025.11.1",
+                'x-agent-build': "1063",
+                'digitalId': "",
                 'Content-Type': "application/json; charset=UTF-8"
-            })
+            }
 
-            res_order = requests.post(order_url, data=json.dumps(order_payload), headers=order_headers, timeout=30)
-            result = res_order.json()
+            res = requests.post(order_url, data=json.dumps(order_payload), headers=order_headers, timeout=30)
+            res_json = res.json()
 
-            if res_order.status_code == 200 and (result.get('complete') == True or result.get('code') == '0000'):
-                status_text.value = "✅ تم الشحن بنجاح تام!"
+            if res.status_code == 200 and (res_json.get('complete') == True or res_json.get('code') == '0000'):
+                status_text.value = f"✅ تم شحن ({product_name}) بنجاح للرقم {receiver}!"
+                status_text.color = ft.colors.GREEN
             else:
-                reason = result.get('reason', result.get('message', 'تأكد من الرصيد أو الرقم السري'))
-                status_text.value = f"❌ فشل الشحن: {reason}"
-            page.update()
+                err_msg = res_json.get('reason', res_json.get('message', 'فشلت العملية، تأكد من رصيد المحفظة'))
+                status_text.value = f"❌ خطأ: {err_msg}"
+                status_text.color = ft.colors.RED
 
         except Exception as ex:
-            status_text.value = f"❌ حدث خطأ غير متوقع: {str(ex)}"
-            page.update()
+            status_text.value = f"❌ حدث خطأ: {str(ex)}"
+            status_text.color = ft.colors.RED
+            
+        progress_ring.visible = False
+        page.update()
 
-    charge_btn = ft.ElevatedButton(text="تنفيذ الشحن الآن", icon=ft.icons.SEND, on_click=execute_recharge)
+    submit_btn = ft.ElevatedButton(
+        text="تنفيذ الشحن",
+        on_click=execute_recharge,
+        width=350,
+        bgcolor=ft.colors.RED,
+        color=ft.colors.WHITE
+    )
 
     page.add(
-        ft.Text("شحن فكة ومارد - فودافون", size=20, weight=ft.FontWeight.BOLD),
+        ft.Text("فودافون فكة ومارد", size=22, weight=ft.FontWeight.BOLD),
         ft.Divider(),
-        receiver_input,
-        pin_input,
         product_dropdown,
+        receiver_field,
+        pin_field,
         ft.VerticalDivider(height=10),
-        charge_btn,
-        ft.Divider(),
+        submit_btn,
+        ft.VerticalDivider(height=10),
+        progress_ring,
         status_text
     )
 
-if __name__ == "__main__":
-    ft.app(target=main)
-
+ft.app(target=main)
