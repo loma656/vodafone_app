@@ -38,9 +38,9 @@ jobs:
         run: |
           pip install flet requests
           
-      # التعديل هنا: إزالة yes |
+      # إعادة yes | لتجاوز سؤال flet
       - name: Build APK
-        run: flet build apk
+        run: yes | flet build apk
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
