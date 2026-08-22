@@ -43,9 +43,8 @@ def main(page: ft.Page):
         width=350,
     )
     
-    receiver_field = ft.TextField(
+        receiver_field = ft.TextField(
         label="رقم المستلم (11 رقم)",
-        prefix_icon=ft.icons.PHONE,
         keyboard_type=ft.KeyboardType.PHONE,
         max_length=11,
         width=350,
@@ -53,7 +52,6 @@ def main(page: ft.Page):
     
     pin_field = ft.TextField(
         label="الرقم السري للمحفظة",
-        prefix_icon=ft.icons.LOCK,
         password=True,
         can_reveal_password=True,
         keyboard_type=ft.KeyboardType.NUMBER,
