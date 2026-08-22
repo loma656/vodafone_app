@@ -24,23 +24,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev mesa-utils ninja-build pkg-config
-      
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.4'
-          channel: 'stable'
-          
-      - name: Accept Android Licenses
-        run: yes | flutter doctor --android-licenses
           
       - name: Install dependencies
         run: |
           pip install flet requests
           
-      # شيلنا yes | لأن فلاتر جهز ومش هيسأل أي أسئلة تاني
+      # الحل هنا: ترك flet يحمل نسخته وتأكيد الموافقة بـ echo y
       - name: Build APK
-        run: flet build apk
+        run: |
+          echo "y" | flet build apk
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
