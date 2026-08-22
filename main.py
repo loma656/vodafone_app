@@ -2,7 +2,6 @@ import flet as ft
 import requests
 import json
 
-# قائمة المنتجات
 FAKKA_PRODUCTS = [
     ("فكة 2.5 جنيه | يوم واحد | 45 وحدة", "Fakka_2.5_Unite"),
     ("فكة 3 جنيه | يوم واحد | 125 وحدة", "Fakka_3_Unite"),
@@ -36,14 +35,13 @@ def main(page: ft.Page):
     page.scroll = ft.ScrollMode.AUTO
     page.padding = 20
 
-    # عناصر الواجهة
     product_dropdown = ft.Dropdown(
         label="اختر الباقة",
         options=[ft.dropdown.Option(text=name, key=pid) for name, pid in ALL_PRODUCTS],
         width=350,
     )
     
-        receiver_field = ft.TextField(
+    receiver_field = ft.TextField(
         label="رقم المستلم (11 رقم)",
         keyboard_type=ft.KeyboardType.PHONE,
         max_length=11,
@@ -85,14 +83,12 @@ def main(page: ft.Page):
         product_id = product_dropdown.value
         product_name = next((name for name, pid in ALL_PRODUCTS if pid == product_id), "")
 
-        # تعطيل الزر وإظهار التحميل
         progress_ring.visible = True
         status_text.value = "🔄 جاري تنفيذ العملية..."
         status_text.color = ft.colors.BLUE
         page.update()
 
         try:
-            # 1. Seamless Token
             url = "http://mobile.vodafone.com.eg/checkSeamless/realms/vf-realm/protocol/openid-connect/auth"
             params = {'client_id': "cash-app"}
             headers = {
@@ -124,7 +120,6 @@ def main(page: ft.Page):
             if msisdn_sender and msisdn_sender.startswith('1'):
                 msisdn_sender = '0' + msisdn_sender
 
-            # 2. Access Token
             token_url = "https://mobile.vodafone.com.eg/auth/realms/vf-realm/protocol/openid-connect/token"
             payload = {
                 'grant_type': "password",
@@ -158,7 +153,6 @@ def main(page: ft.Page):
             if not access_token:
                 raise Exception("فشل الحصول على access token")
 
-            # 3. Product Order
             order_url = "https://mobile.vodafone.com.eg/services/dxl/pom/productOrder"
             order_payload = {
                 "channel": {"name": "MobileApp"},
@@ -247,3 +241,4 @@ def main(page: ft.Page):
     )
 
 ft.app(target=main)
+
