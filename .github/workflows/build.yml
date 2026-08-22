@@ -29,9 +29,11 @@ jobs:
         run: |
           pip install flet requests
           
-      # الحل هنا: ترك flet يحمل نسخته وتأكيد الموافقة بـ echo y
+      # الخطوة السحرية: تشغيل flet build لمرة أولى ليقوم بتحميل فلاتر، ثم قبول التراخيص فوراً وبعدها بناء التطبيق
       - name: Build APK
         run: |
+          echo "y" | flet build apk || true
+          yes | /home/runner/.flet/cache/flutter/bin/flutter doctor --android-licenses || true
           echo "y" | flet build apk
         
       - name: Upload APK
