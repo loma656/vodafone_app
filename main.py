@@ -220,11 +220,10 @@ def main(page: ft.Page):
         page.update()
 
     submit_btn = ft.ElevatedButton(
-        text="تنفيذ الشحن",
+        content=ft.Text("تنفيذ الشحن", color=ft.Colors.WHITE),
         on_click=execute_recharge,
         width=350,
         bgcolor=ft.Colors.RED,
-        color=ft.Colors.WHITE
     )
 
     page.add(
