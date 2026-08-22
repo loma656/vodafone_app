@@ -14,20 +14,34 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev mesa-utils ninja-build pkg-config
+      
+      # السر هنا: حددنا نفس الإصدار 3.24.3 اللي هو طالبه بالظبط
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          
+      - name: Accept Android Licenses
+        run: yes | flutter doctor --android-licenses
           
       - name: Install dependencies
         run: |
           pip install flet requests
           
+      # رجعنا أمر البناء سليم ونظيف من غير yes | لأنه خلاص مش هيسأل
       - name: Build APK
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-        run: |
-          yes | flet build apk
+        run: flet build apk
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
