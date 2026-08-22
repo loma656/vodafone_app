@@ -14,33 +14,20 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev mesa-utils ninja-build pkg-config
-      
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-          
-      - name: Accept Android Licenses
-        run: yes | flutter doctor --android-licenses
           
       - name: Install dependencies
         run: |
           pip install flet requests
           
-      # إعادة yes | لتجاوز سؤال flet
       - name: Build APK
-        run: yes | flet build apk
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          yes | flet build apk
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
