@@ -232,9 +232,9 @@ def main(page: ft.Page):
         product_dropdown,
         receiver_field,
         pin_field,
-        ft.VerticalDivider(height=10),
+        ft.Container(height=10),
         submit_btn,
-        ft.VerticalDivider(height=10),
+        ft.Container(height=10),
         progress_ring,
         status_text
     )
