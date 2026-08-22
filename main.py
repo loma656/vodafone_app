@@ -62,21 +62,21 @@ def main(page: ft.Page):
     def execute_recharge(e):
         if not product_dropdown.value:
             status_text.value = "❌ من فضلك اختر الباقة أولاً"
-            status_text.color = ft.colors.RED
+            status_text.color = ft.Colors.RED
             page.update()
             return
             
         receiver = receiver_field.value.strip()
         if not (receiver.startswith("01") and len(receiver) == 11 and receiver.isdigit()):
             status_text.value = "❌ رقم غير صحيح! يجب أن يبدأ بـ 01 ويتكون من 11 رقماً"
-            status_text.color = ft.colors.RED
+            status_text.color = ft.Colors.RED
             page.update()
             return
             
         pin = pin_field.value.strip()
         if not pin:
             status_text.value = "❌ الرقم السري مطلوب"
-            status_text.color = ft.colors.RED
+            status_text.color = ft.Colors.RED
             page.update()
             return
 
@@ -85,7 +85,7 @@ def main(page: ft.Page):
 
         progress_ring.visible = True
         status_text.value = "🔄 جاري تنفيذ العملية..."
-        status_text.color = ft.colors.BLUE
+        status_text.color = ft.Colors.BLUE
         page.update()
 
         try:
@@ -206,15 +206,15 @@ def main(page: ft.Page):
 
             if res.status_code == 200 and (res_json.get('complete') == True or res_json.get('code') == '0000'):
                 status_text.value = f"✅ تم شحن ({product_name}) بنجاح للرقم {receiver}!"
-                status_text.color = ft.colors.GREEN
+                status_text.color = ft.Colors.GREEN
             else:
                 err_msg = res_json.get('reason', res_json.get('message', 'فشلت العملية، تأكد من رصيد المحفظة'))
                 status_text.value = f"❌ خطأ: {err_msg}"
-                status_text.color = ft.colors.RED
+                status_text.color = ft.Colors.RED
 
         except Exception as ex:
             status_text.value = f"❌ حدث خطأ: {str(ex)}"
-            status_text.color = ft.colors.RED
+            status_text.color = ft.Colors.RED
             
         progress_ring.visible = False
         page.update()
@@ -223,8 +223,8 @@ def main(page: ft.Page):
         text="تنفيذ الشحن",
         on_click=execute_recharge,
         width=350,
-        bgcolor=ft.colors.RED,
-        color=ft.colors.WHITE
+        bgcolor=ft.Colors.RED,
+        color=ft.Colors.WHITE
     )
 
     page.add(
