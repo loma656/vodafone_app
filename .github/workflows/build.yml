@@ -25,16 +25,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev mesa-utils ninja-build pkg-config
           
+      # تثبيت إصدار Flutter 3.44.8 رسمياً ليكون متاحاً في المسار العام
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: 'stable'
+          
+      # قبول التراخيص لنسخة فلاتر الرسمية
+      - name: Accept Android Licenses
+        run: yes | flutter doctor --android-licenses
+          
       - name: Install dependencies
         run: |
           pip install flet requests
           
-      # الخطوة السحرية: تشغيل flet build لمرة أولى ليقوم بتحميل فلاتر، ثم قبول التراخيص فوراً وبعدها بناء التطبيق
+      # بناء التطبيق مباشرة بعد تجهيز كل شيء
       - name: Build APK
-        run: |
-          echo "y" | flet build apk || true
-          yes | /home/runner/.flet/cache/flutter/bin/flutter doctor --android-licenses || true
-          echo "y" | flet build apk
+        run: flet build apk
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
