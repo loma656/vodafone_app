@@ -20,7 +20,6 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
-      # هذه الخطوة الجديدة لتثبيت المكتبات الناقصة
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
@@ -39,8 +38,9 @@ jobs:
         run: |
           pip install flet requests
           
+      # التعديل هنا: إزالة yes |
       - name: Build APK
-        run: yes | flet build apk
+        run: flet build apk
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
