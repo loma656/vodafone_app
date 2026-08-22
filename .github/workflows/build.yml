@@ -1,0 +1,34 @@
+Entername: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          
+      - name: Install dependencies
+        run: |
+          pip install flet requests
+          
+      - name: Build APK
+        run: flet build apk
+        
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VodafoneApp-APK
+          path: build/apk/**/*.apk
