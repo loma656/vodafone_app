@@ -14,18 +14,30 @@ jobs:
         with:
           python-version: '3.11'
       
+      # 1. تثبيت Java (مطلوب لأدوات Android SDK)
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
           
+      # 2. الموافقة التلقائية على تراخيص الأندرويد (حل الخطأ الثاني)
+      - name: Accept Android Licenses
+        run: yes | flutter doctor --android-licenses
+          
       - name: Install dependencies
         run: |
           pip install flet requests
           
+      # 3. تحديد اسم مشروع صحيح وواضح (حل الخطأ الأول)
       - name: Build APK
-        run: yes | flet build apk
+        run: yes | flet build apk --project-name vodafone_app
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
