@@ -432,21 +432,19 @@ def main(page: ft.Page):
             bgcolor=ft.Colors.GREEN,
         )
 
-        # أزرار التواصل (واتساب وتليجرام)
+        # أزرار التواصل (تم تعديلها لتستخدم content=ft.Text لتجنب خطأ Flet)
         whatsapp_btn = ft.ElevatedButton(
-            text="تواصل واتساب",
+            content=ft.Text("تواصل واتساب", color=ft.Colors.WHITE),
             icon=ft.Icons.PHONE,
             bgcolor=ft.Colors.GREEN_700,
-            color=ft.Colors.WHITE,
             url="https://wa.me/201095486123",
             width=165
         )
 
         telegram_btn = ft.ElevatedButton(
-            text="تواصل تليجرام",
+            content=ft.Text("تواصل تليجرام", color=ft.Colors.WHITE),
             icon=ft.Icons.SEND,
             bgcolor=ft.Colors.BLUE_700,
-            color=ft.Colors.WHITE,
             url="https://t.me/R_XTS",
             width=165
         )
@@ -480,4 +478,3 @@ def main(page: ft.Page):
     check_and_load()
 
 ft.app(target=main)
-
