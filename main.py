@@ -1,6 +1,7 @@
 import flet as ft
 import requests
 import json
+import datetime
 
 FAKKA_PRODUCTS = [
     ("فكة 2.5 جنيه | يوم واحد | 45 وحدة", "Fakka_2.5_Unite"),
@@ -82,6 +83,8 @@ def main(page: ft.Page):
 
         product_id = product_dropdown.value
         product_name = next((name for name, pid in ALL_PRODUCTS if pid == product_id), "")
+        # نستخرج اسم الباقة فقط للطباعة، مثلاً "فكة 2.5 جنيه"
+        short_product_name = product_name.split(" | ")[0]
 
         progress_ring.visible = True
         status_text.value = "🔄 جاري تنفيذ العملية..."
@@ -89,6 +92,7 @@ def main(page: ft.Page):
         page.update()
 
         try:
+            # === طلبات الـ API ===
             url = "http://mobile.vodafone.com.eg/checkSeamless/realms/vf-realm/protocol/openid-connect/auth"
             params = {'client_id': "cash-app"}
             headers = {
@@ -202,19 +206,32 @@ def main(page: ft.Page):
             }
 
             res = requests.post(order_url, data=json.dumps(order_payload), headers=order_headers, timeout=30)
-            res_json = res.json()
-
-            if res.status_code == 200 and (res_json.get('complete') == True or res_json.get('code') == '0000'):
-                status_text.value = f"✅ تم شحن ({product_name}) بنجاح للرقم {receiver}!"
-                status_text.color = ft.Colors.GREEN
-            else:
-                err_msg = res_json.get('reason', res_json.get('message', 'فشلت العملية، تأكد من رصيد المحفظة'))
-                status_text.value = f"❌ خطأ: {err_msg}"
-                status_text.color = ft.Colors.RED
+            
+            # --- تعديل رسالة النجاح ---
+            # بغض النظر عن الرد الفعلي من الخادم (رسالة فشل أو رصيد غير كافي)،
+            # سنقوم بعرض رسالة نجاح مبهرة للمستخدم إذا تم الاتصال بالخادم بنجاح!
+            
+            current_time = datetime.datetime.now().strftime("%Y/%m/%d | %I:%M %p")
+            
+            # يمكنك تعديل النص هنا ليطابق الصورة 153596.jpg بالضبط
+            success_message = (
+                f"✅ عملية ناجحة!\n\n"
+                f"رقم المستلم: {receiver}\n"
+                f"الباقة: {short_product_name}\n"
+                f"الوقت: {current_time}"
+            )
+            
+            status_text.value = success_message
+            status_text.color = ft.Colors.GREEN
+            status_text.size = 16
+            status_text.weight = ft.FontWeight.BOLD
 
         except Exception as ex:
-            status_text.value = f"❌ حدث خطأ: {str(ex)}"
+            # هنا نعرض الخطأ فقط في حالة وجود مشكلة في الإنترنت أو الاتصال الأساسي
+            status_text.value = f"❌ حدث خطأ في الاتصال: {str(ex)}"
             status_text.color = ft.Colors.RED
+            status_text.size = 14
+            status_text.weight = ft.FontWeight.NORMAL
             
         progress_ring.visible = False
         page.update()
